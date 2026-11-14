@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#101827">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="My Budget">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>My Budget</title>
+<style>
+:root{color-scheme:dark;--bg:#101827;--panel:#202e43;--muted:#aab8cc}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:#fff;font:16px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;padding:env(safe-area-inset-top) 14px env(safe-area-inset-bottom);max-width:620px;margin-inline:auto}
+header{display:flex;justify-content:space-between;align-items:center;padding:18px 2px 14px}h1{font-size:27px;margin:0}h2{font-size:20px;margin:18px 0 10px}.muted{color:var(--muted);font-size:13px}
+button{cursor:pointer}.iconbtn,.back{background:#273449;border:0;color:white;border-radius:12px;padding:11px;font-size:18px}
+.actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}.btn{border:0;border-radius:12px;padding:14px 12px;color:white;font-size:16px;font-weight:650}.deposit{background:#218b58}.spend{background:#c44747}.primary{background:#367bc0}.danger{background:#b83c49}.secondary{background:#33445d}
+.total,.panel{background:var(--panel);border-radius:16px;padding:16px;margin:12px 0}.total .amount{font-size:32px;font-weight:750;margin-top:4px}
+.cards{display:grid;grid-template-columns:1fr 1fr;gap:10px}.cat{border-radius:14px;padding:14px;min-width:0}.cathead{display:flex;justify-content:space-between}.emoji{font-size:22px}.catname{font-weight:650;margin-top:8px}.catmoney{font-size:21px;font-weight:750;margin-top:4px;overflow-wrap:anywhere}
+.history{display:grid;gap:8px}.historytools{display:flex;gap:9px;align-items:center;margin:8px 0 12px}.historytools>*{flex:1}.smallbtn{border:0;border-radius:10px;padding:10px 12px;color:#fff;background:#367bc0;font-weight:650}.historyhead{display:flex;justify-content:space-between;align-items:center;gap:10px}.historyhead h2{margin:18px 0 10px}.tx{background:#27374d;border:0;border-radius:12px;padding:12px;color:#fff;text-align:left;display:flex;justify-content:space-between;gap:8px;width:100%}.tx strong{display:block}.positive{color:#64d99a}.negative{color:#ff8585}
+.screen{display:none}.screen.active{display:block}label{display:block;font-weight:600;margin:12px 0 6px}input,select{width:100%;background:#101827;border:1px solid #52647b;border-radius:10px;padding:12px;color:#fff;font:inherit}
+.row{display:flex;gap:9px}.row>*{flex:1}.line{height:1px;background:#40516a;margin:12px 0}.allocrow{display:grid;grid-template-columns:1fr 90px;gap:10px;align-items:center;margin:8px 0}.allocrow input{padding:8px}.notice{background:#493c25;color:#ffe4a5;padding:10px;border-radius:10px;font-size:13px;margin:10px 0}.amountline{display:flex;justify-content:space-between;gap:10px;margin:8px 0}.foot{text-align:center;color:#8494aa;font-size:11px;padding:20px 0}.checkboxrow{display:flex;align-items:center;gap:8px}.checkboxrow input{width:auto}
+</style>
+</head>
+<body>
+<header><div><h1>My Budget</h1><div class="muted">Your money, organized.</div></div><button class="iconbtn" id="settingsBtn" aria-label="Settings">⚙</button></header>
+<main>
+<section id="home" class="screen active">
+<div class="actions"><button class="btn deposit" id="depositBtn">＋ Deposit</button><button class="btn spend" id="spendBtn">－ Spend</button></div>
+<div class="total"><div class="muted">TOTAL AVAILABLE</div><div class="amount" id="total">$0.00</div></div>
+<h2>Your Categories</h2><div class="cards" id="categories"></div>
+<div class="historyhead"><h2>Recent Transactions</h2><button class="smallbtn" id="openHistory">View All</button></div><div class="muted" style="margin-bottom:9px">Showing your 3 most recent transactions. Tap one to edit it.</div><div class="history" id="history"></div>
+</section>
+<section id="transactionHistory" class="screen"><button class="back" data-home>‹ Back</button><h2>Transaction History</h2><div class="panel"><label for="historyDate">Find transactions by date</label><div class="historytools"><input id="historyDate" type="date"><button class="smallbtn" id="clearHistoryDate" type="button">Clear</button></div><div class="muted" id="historyDateMsg">Showing all transactions, newest first.</div></div><div class="history" id="fullHistory"></div></section>
+<section id="deposit" class="screen"><button class="back" data-home>‹ Back</button><h2>Make a Deposit</h2>
+<label for="depAmount">Deposit amount</label><input id="depAmount" type="number" min="0.01" step="0.01" placeholder="0.00">
+<div class="line"></div><div class="amountline"><strong>Allocation</strong><span class="muted">Must total 100%</span></div><div id="allocations"></div>
+<div class="amountline"><strong>Allocation total</strong><strong id="allocated">100%</strong></div>
+<label for="depNote">Note (optional)</label><input id="depNote" placeholder="e.g. Weekly allowance">
+<button class="btn deposit" style="width:100%;margin-top:16px" id="confirmDeposit">Confirm Deposit</button><div id="depError" class="notice" hidden></div>
+</section>
+<section id="spend" class="screen"><button class="back" data-home>‹ Back</button><h2>Record Spending</h2>
+<label for="spAmount">How much did you spend?</label><input id="spAmount" type="number" min="0.01" step="0.01" placeholder="0.00">
+<label for="spCategory">Category</label><select id="spCategory"></select>
+<label for="spNote">Note (optional)</label><input id="spNote" placeholder="e.g. Lunch">
+<button class="btn spend" style="width:100%;margin-top:16px" id="confirmSpend">Confirm Spending</button><div id="spError" class="notice" hidden></div>
+</section>
+<section id="details" class="screen"><button class="back" data-home>‹ Back</button><h2>Transaction Details</h2>
+<label for="editType">Transaction type</label><select id="editType"><option>Deposit</option><option>Spend</option></select>
+<label for="editAmount">Amount</label><input id="editAmount" type="number" min="0.01" step="0.01">
+<label for="editCategory">Category</label><select id="editCategory"></select>
+<label for="editDate">Date</label><input id="editDate" type="date">
+<label for="editNote">Note</label><input id="editNote" placeholder="Optional description">
+<button class="btn primary" style="width:100%;margin-top:16px" id="saveEdit">Save Changes</button>
+<button class="btn danger" style="width:100%;margin-top:9px" id="deleteTx">Delete Transaction</button>
+</section>
+<section id="settings" class="screen"><button class="back" data-home>‹ Back</button><h2>Settings</h2>
+<div class="panel"><strong>Default deposit percentages</strong><div class="muted">These are used for new deposits. Total must equal 100%.</div><div id="settingsCats"></div><button class="btn primary" style="width:100%;margin-top:12px" id="savePercents">Save Percentages</button><div id="settingsMsg" class="muted"></div></div>
+<div class="panel"><strong>Add a category</strong><label for="newName">Category name</label><input id="newName" maxlength="24" placeholder="e.g. Clothing"><label for="newPct">Starting percentage</label><input id="newPct" type="number" min="0" max="100" value="0"><button class="btn primary" style="width:100%;margin-top:12px" id="addCategory">Add Category</button></div>
+<div class="panel"><strong>Delete a category</strong><div class="muted">Transfer its full balance to selected categories. Shares must total 100%.</div><label for="deleteCategory">Category to delete</label><select id="deleteCategory"></select><div id="recipients"></div><button class="btn danger" style="width:100%;margin-top:12px" id="doDeleteCategory">Transfer balance and delete</button><div id="deleteMsg" class="muted"></div></div>
+<div class="panel"><strong>Backup and restore</strong><div class="muted">Export a backup or restore from a previous backup file.</div><button class="btn secondary" style="width:100%;margin-top:12px" id="exportData">Export Backup</button><label for="importFile">Restore backup</label><input id="importFile" type="file" accept="application/json"></div>
+</section>
+</main><div class="foot">MY BUDGET · Saved on this device</div>
+<script>
+const KEY='my-budget-data-v1';
+const defaults={categories:[{name:'Entertainment',pct:30,balance:0,color:'#8056C7',emoji:'🎮'},{name:'Fast Food',pct:30,balance:0,color:'#E98B38',emoji:'🍔'},{name:'Grocery Foods',pct:10,balance:0,color:'#319B68',emoji:'🛒'},{name:'Other',pct:20,balance:0,color:'#4389CE',emoji:'📦'},{name:'Savings',pct:10,balance:0,color:'#B36E9A',emoji:'🐷'}],transactions:[]};
+const clone=x=>JSON.parse(JSON.stringify(x));
+let data=load(),editingId=null;
+function load(){try{let x=JSON.parse(localStorage.getItem(KEY));if(x&&Array.isArray(x.categories)&&Array.isArray(x.transactions))return x}catch(e){}return clone(defaults)}
+function persist(){localStorage.setItem(KEY,JSON.stringify(data))}
+function money(n){return (n<0?'-$':'$')+Math.abs(n).toFixed(2)}
+function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function show(id){document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('active',s.id===id));document.getElementById('settingsBtn').style.visibility=id==='home'?'visible':'hidden';if(id==='home')render();if(id==='transactionHistory')renderFullHistory()}
+document.querySelectorAll('[data-home]').forEach(b=>b.onclick=()=>show('home'));
+document.getElementById('settingsBtn').onclick=()=>{renderSettings();show('settings')};
+document.getElementById('openHistory').onclick=()=>{document.getElementById('historyDate').value='';renderFullHistory();show('transactionHistory')};
+document.getElementById('historyDate').onchange=renderFullHistory;
+document.getElementById('clearHistoryDate').onclick=()=>{document.getElementById('historyDate').value='';renderFullHistory()};
+document.getElementById('depositBtn').onclick=()=>{document.getElementById('depAmount').value='';document.getElementById('depNote').value='';document.getElementById('depError').hidden=true;renderAllocations();show('deposit')};
+document.getElementById('spendBtn').onclick=()=>{document.getElementById('spAmount').value='';document.getElementById('spNote').value='';document.getElementById('spError').hidden=true;fillSelect('spCategory');show('spend')};
+function transactionMarkup(t){return `<button class="tx" data-tx="${t.id}"><span><strong>${esc(t.type)} · ${esc(t.category)}</strong><span class="muted">${esc(t.date)} · ${esc(t.note||'')}</span></span><strong class="${t.type==='Deposit'?'positive':'negative'}">${t.type==='Deposit'?'+':'−'}${money(t.amount)}</strong></button>`}
+function bindTxButtons(root){root.querySelectorAll('[data-tx]').forEach(b=>b.onclick=()=>openTx(b.dataset.tx))}
+function render(){document.getElementById('total').textContent=money(data.categories.reduce((s,c)=>s+c.balance,0));document.getElementById('categories').innerHTML=data.categories.map(c=>`<div class="cat" style="background:${c.color}"><div class="cathead"><span class="emoji">${c.emoji||'📦'}</span><span>${c.pct}%</span></div><div class="catname">${esc(c.name)}</div><div class="catmoney">${money(c.balance)}</div></div>`).join('');let recent=data.transactions.slice().reverse().slice(0,3);document.getElementById('history').innerHTML=recent.length?recent.map(transactionMarkup).join(''):'<div class="muted">No transactions yet.</div>';bindTxButtons(document.getElementById('history'));}
+function renderFullHistory(){let date=document.getElementById('historyDate').value;let items=data.transactions.slice().reverse().filter(t=>!date||t.date===date);document.getElementById('fullHistory').innerHTML=items.length?items.map(transactionMarkup).join(''):'<div class="muted">'+(date?'No transactions found for this date.':'No transactions yet.')+'</div>';document.getElementById('historyDateMsg').textContent=date?`Showing ${items.length} transaction${items.length===1?'':'s'} for ${date}.`:'Showing all transactions, newest first.';bindTxButtons(document.getElementById('fullHistory'));}
+function fillSelect(id,selected){document.getElementById(id).innerHTML=data.categories.map(c=>`<option value="${esc(c.name)}" ${c.name===selected?'selected':''}>${esc(c.name)}</option>`).join('')}
+function renderAllocations(){document.getElementById('allocations').innerHTML=data.categories.map(c=>`<div class="allocrow"><span>${esc(c.name)}</span><input type="number" min="0" max="100" step="1" value="${c.pct}" data-pct="${esc(c.name)}"></div>`).join('');document.querySelectorAll('[data-pct]').forEach(i=>i.oninput=updateAllocation);updateAllocation()}
+function updateAllocation(){let p=[...document.querySelectorAll('[data-pct]')].reduce((s,i)=>s+(Number(i.value)||0),0);document.getElementById('allocated').textContent=p+'%'+(p===100?' ✓':' · must equal 100%')}
+function applyEffects(effects,sign){effects.forEach(e=>{let c=data.categories.find(x=>x.name===e.name);if(c)c.balance=Math.round((c.balance+sign*e.delta)*100)/100})}
+function spendEffects(amount,category){let c=data.categories.find(x=>x.name===category);if(!c)throw Error('Choose an existing category.');if(category==='Other')return [{name:'Other',delta:-amount}];let first=Math.min(amount,Math.max(0,c.balance)),rem=Math.round((amount-first)*100)/100;let out=[{name:category,delta:-first}];if(rem>0){if(!data.categories.some(x=>x.name==='Other'))throw Error('An Other category is needed for overspending.');out.push({name:'Other',delta:-rem})}return out}
+function record(type,amount,category,note,effects){let d=new Date();data.transactions.push({id:crypto.randomUUID(),type,amount,category,note,date:d.toLocaleDateString('en-CA'),time:d.toLocaleTimeString([],{hour:'numeric',minute:'2-digit'}),effects});persist();render()}
+document.getElementById('confirmDeposit').onclick=()=>{let amount=Number(document.getElementById('depAmount').value),inputs=[...document.querySelectorAll('[data-pct]')],sum=inputs.reduce((s,i)=>s+(Number(i.value)||0),0),err=document.getElementById('depError');if(!(amount>0)){err.textContent='Enter an amount greater than zero.';err.hidden=false;return}if(sum!==100||inputs.some(i=>Number(i.value)<0)){err.textContent='Allocation must total exactly 100%.';err.hidden=false;return}let effects=inputs.map(i=>({name:i.dataset.pct,delta:Math.round(amount*(Number(i.value)||0))/100}));applyEffects(effects,1);record('Deposit',amount,'Multiple categories',document.getElementById('depNote').value,effects);show('home')};
+document.getElementById('confirmSpend').onclick=()=>{let amount=Number(document.getElementById('spAmount').value),category=document.getElementById('spCategory').value,err=document.getElementById('spError');if(!(amount>0)){err.textContent='Enter an amount greater than zero.';err.hidden=false;return}try{let effects=spendEffects(amount,category);applyEffects(effects,1);record('Spend',amount,category,document.getElementById('spNote').value,effects);show('home')}catch(e){err.textContent=e.message;err.hidden=false}};
+function openTx(id){let t=data.transactions.find(x=>x.id===id);if(!t)return;editingId=id;document.getElementById('editType').value=t.type;document.getElementById('editAmount').value=t.amount;fillSelect('editCategory',data.categories.some(c=>c.name===t.category)?t.category:data.categories[0]?.name);document.getElementById('editDate').value=t.date;document.getElementById('editNote').value=t.note||'';show('details')}
+document.getElementById('saveEdit').onclick=()=>{let old=data.transactions.find(t=>t.id===editingId),amount=Number(document.getElementById('editAmount').value),type=document.getElementById('editType').value,category=document.getElementById('editCategory').value,date=document.getElementById('editDate').value;if(!(amount>0)||!date){alert('Enter a valid amount and date.');return}applyEffects(old.effects,-1);let effects;try{effects=type==='Deposit'?[{name:category,delta:amount}]:spendEffects(amount,category)}catch(e){applyEffects(old.effects,1);alert(e.message);return}applyEffects(effects,1);Object.assign(old,{type,amount,category,note:document.getElementById('editNote').value,date,effects});persist();show('home')};
+document.getElementById('deleteTx').onclick=()=>{if(!confirm('Delete this transaction and reverse its effect on your balances?'))return;let i=data.transactions.findIndex(t=>t.id===editingId);if(i<0)return;applyEffects(data.transactions[i].effects,-1);data.transactions.splice(i,1);persist();show('home')};
+function renderSettings(){document.getElementById('settingsCats').innerHTML=data.categories.map(c=>`<div class="allocrow"><span>${esc(c.name)}</span><input type="number" min="0" max="100" value="${c.pct}" data-setting="${esc(c.name)}"></div>`).join('');document.getElementById('deleteCategory').innerHTML=data.categories.map(c=>`<option value="${esc(c.name)}">${esc(c.name)}</option>`).join('');renderRecipients()}
+document.getElementById('savePercents').onclick=()=>{let ins=[...document.querySelectorAll('[data-setting]')],sum=ins.reduce((s,i)=>s+(Number(i.value)||0),0);if(sum!==100){document.getElementById('settingsMsg').textContent='Percentages must total exactly 100%.';return}ins.forEach(i=>{let c=data.categories.find(c=>c.name===i.dataset.setting);c.pct=Number(i.value)||0});persist();document.getElementById('settingsMsg').textContent='Percentages saved.';renderSettings();render()};
+document.getElementById('addCategory').onclick=()=>{let name=document.getElementById('newName').value.trim(),pct=Number(document.getElementById('newPct').value);if(!name||data.categories.some(c=>c.name.toLowerCase()===name.toLowerCase())||pct<0||pct>100){alert('Enter a unique name and a percentage from 0 to 100.');return}data.categories.push({name,pct,balance:0,color:['#8A6A48','#487F83','#A05B65','#647A4C'][data.categories.length%4],emoji:'📦'});persist();document.getElementById('newName').value='';renderSettings();render()};
+document.getElementById('deleteCategory').onchange=renderRecipients;
+function renderRecipients(){let name=document.getElementById('deleteCategory').value;document.getElementById('recipients').innerHTML=data.categories.filter(c=>c.name!==name).map(c=>`<div class="allocrow"><label class="checkboxrow"><input type="checkbox" data-rec="${esc(c.name)}"> ${esc(c.name)}</label><input type="number" min="0" max="100" value="0" data-share="${esc(c.name)}"></div>`).join('')}
+document.getElementById('doDeleteCategory').onclick=()=>{let name=document.getElementById('deleteCategory').value,checks=[...document.querySelectorAll('[data-rec]:checked')],sum=checks.reduce((s,x)=>s+(Number(document.querySelector(`[data-share="${CSS.escape(x.dataset.rec)}"]`).value)||0),0);if(!checks.length||sum!==100){document.getElementById('deleteMsg').textContent='Select recipients whose shares total 100%.';return}let c=data.categories.find(c=>c.name===name),bal=c.balance;checks.forEach(x=>{let pct=Number(document.querySelector(`[data-share="${CSS.escape(x.dataset.rec)}"]`).value)||0;let dest=data.categories.find(c=>c.name===x.dataset.rec);dest.balance=Math.round((dest.balance+bal*pct/100)*100)/100});data.categories=data.categories.filter(c=>c.name!==name);data.transactions.forEach(t=>{if(t.category===name)t.category='Multiple categories';t.effects=t.effects.filter(e=>e.name!==name)});persist();renderSettings();render();document.getElementById('deleteMsg').textContent='Balance transferred and category deleted.'};
+document.getElementById('exportData').onclick=()=>{let blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='my-budget-backup.json';a.click();URL.revokeObjectURL(a.href)};
+document.getElementById('importFile').onchange=async e=>{let f=e.target.files[0];if(!f)return;try{let x=JSON.parse(await f.text());if(!Array.isArray(x.categories)||!Array.isArray(x.transactions))throw Error();data=x;persist();render();alert('Backup restored.')}catch(err){alert('Could not read that backup file.')}e.target.value=''};
+if('serviceWorker' in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
+render();
+</script></body></html>
